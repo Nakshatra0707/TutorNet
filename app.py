@@ -5,7 +5,7 @@ import pandas as pd
 # Database stuff
 from pymongo import MongoClient
 
-client = MongoClient("mongodb+srv://nakshatradubey:NSlVfXFGT1lrlIql@tutornet.2k02z1h.mongodb.net/")
+client = MongoClient(st._secrets["mongo"]["connection_string"])
 
 db = client['TutorNet_Database']
 
