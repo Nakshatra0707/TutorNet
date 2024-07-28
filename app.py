@@ -5,7 +5,7 @@ import pandas as pd
 # Database stuff
 from pymongo import MongoClient
 
-connection_string = st._secrets["mongo"]["connection_string"]
+connection_string = st.secrets["mongo"]["connection_string"]
 
 client = MongoClient(connection_string, serverSelectionTimeoutMS=5000)
 
