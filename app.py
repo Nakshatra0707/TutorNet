@@ -5,7 +5,7 @@ import pandas as pd
 # Database stuff
 from pymongo import MongoClient
 
-client = MongoClient(st._secrets["mongo"]["connection_string"])
+client = MongoClient(st._secrets["mongo"]["connection_string"], serverSelectionTimeoutMS=5000)
 
 db = client['TutorNet_Database']
 
