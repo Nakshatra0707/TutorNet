@@ -49,11 +49,49 @@ if "tutor" not in st.session_state:
 tabs = st.tabs(["Get a Tutor", "View Tutors", "My profile", "Register", "Sign in" , "Classes"])
 credit = 20
 
+def update_credit_score(current_score, rating_given):
+    # Define parameters
+    max_impact = 50
+    neutral_rating = 5
+    min_score = 500
+    max_score = 1500
+    
+    # Calculate rating impact per point
+    rating_impact = max_impact / neutral_rating  # 10 points per rating unit difference
+    
+    # Calculate change in score based on rating
+    delta_s = rating_impact * (rating_given - neutral_rating)
+    
+    # Update score based on rating
+    new_score = current_score + delta_s
+    
+    # Ensure score is within the defined range
+    if new_score < min_score:
+        new_score = min_score
+    elif new_score > max_score:
+        new_score = max_score
+    
+    return new_score
+
+
 with tabs[5]: # Classes Tab
     st.title("Your Classes")
     if st.button("View Classes"):
-        st.write(f"Your Students: {st.session_state.user.get("students")}")
-        st.write(f"Your Tutors: {st.session_state.user.get("tutors")}")
+        if st.session_state.user is None:
+            st.error("Register or Sign-in before viewing this tab!")
+        else:
+            st.write(f"Your Students: {st.session_state.user.get('students')}")
+            st.write(f"Your Tutors: {st.session_state.tutor.get("name")} on {st.session_state.days} at {st.session_state.times} for {st.session_state.tutor.get("subjects")}")
+    
+    if (st.session_state.tutor is not None):
+        tutor_rating = st.text_input("Rate your tutor")
+                
+        if st.button("Submit Rating"):
+            current_tutor_points = st.session_state.tutor.get("points")
+            new_points = update_credit_score(current_tutor_points, int(tutor_rating))
+            collection.update_one({"name": st.session_state.tutor.get("name")}, {"$set": {"points": new_points}})
+            st.session_state.tutor = collection.find_one({"name": st.session_state.tutor.get("name")})
+            st.success(f"Updated Tutor Points: {new_points}")
 
 def assign_pool(credit_score):
     min_score = 500
@@ -82,59 +120,46 @@ with tabs[0]: # Get a tutor tab
     st.header("Get a Tutor")
     help_subject = st.selectbox("Which subject do you need help in?", ["Math", "English", "Physics", "Chemistry", "Computer Science"])
     if st.button("Get a Tutor!"):
-        user_list = collection.find({})
-        for temp_user in user_list:
-            collection.update_one({"name":temp_user.get("name")},{"$set":{"pool":assign_pool(temp_user.get("points"))}})
-        st.session_state.pool = st.session_state.user.get("pool")
+        if st.session_state.user is None:
+            st.error("Register or Sign-in before viewing this tab!")
+        else:
+            user_list = collection.find({})
+            for temp_user in user_list:
+                collection.update_one({"name":temp_user.get("name")},{"$set":{"pool":assign_pool(temp_user.get("points"))}})
+            st.session_state.pool = st.session_state.user.get("pool")
 
-        print(help_subject)
-        print(st.session_state.pool)
+            pool_list = collection.find({"pool":st.session_state.pool})
+            for temp_tutor in pool_list:
+                if temp_tutor.get("name") == st.session_state.username:
+                    continue #student cannot pick himself
+                tutor_subject = temp_tutor.get("subjects")
+                
+                if help_subject == tutor_subject: 
+                    if st.session_state.times == temp_tutor.get("times"):
+                        if st.session_state.grade == temp_tutor.get("grade"):
+                            if st.session_state.days == temp_tutor.get("days"):
+                                st.session_state.tutor = temp_tutor
+                                break
+            if st.session_state.tutor is not None:
+                with st.spinner("Matching Subjects......"):
+                    time.sleep(1)
+                with st.spinner("Matching Days......"):
+                    time.sleep(1)
+                with st.spinner("Matching Times......"):
+                    time.sleep(1)
+                with st.spinner("Selecting the best tutor......"):
+                    time.sleep(1)
+                st.success(f"You have been matched with {st.session_state.tutor.get("name")}")
+    if st.session_state.tutor is not None:
+        if st.button("Confirm"):
+            collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":st.session_state.tutor.get("name")}})
+            collection.update_one({"name":st.session_state.tutor.get("name")}, {"$set":{"students":st.session_state.username}})
+            with st.spinner("Confirming....."):
+                time.sleep(1)
+            st.success(f"Confirmed Class with {st.session_state.tutor.get("name")} on {st.session_state.days} at {st.session_state.times} for {help_subject}")
 
-        pool_list = collection.find({"pool":st.session_state.pool})
-        for temp_tutor in pool_list:
-            if temp_tutor.get("name") == st.session_state.username:
-                continue
-            tutor_subject = temp_tutor.get("subjects")
-            print(tutor_subject)
-            #if help_subject == temp_tutor.get("subjects"):
-            if help_subject in tutor_subject:
-                #for user_time in st.session_state.user.get("times").split[", "]:
-                    #for tutor_time in temp_tutor.get("times").split[", "]:
-                if st.session_state.times == temp_tutor.get("times"):
-                    st.session_state.tutor = temp_tutor
-                    break
-        if st.session_state.tutor is not None:
-            with st.spinner("Matching Subjects......"):
-                time.sleep(1)
-            with st.spinner("Matching Days......"):
-                time.sleep(1)
-            with st.spinner("Matching Times......"):
-                time.sleep(1)
-            with st.spinner("Selecting the best tutor......"):
-                time.sleep(1)
-            st.success(f"You have been matched with {st.session_state.tutor.get("name")}")
-            update_tutors = ""
-            for tutors in st.session_state.user.get("tutors").split():
-                if tutors == "None":
-                    update_tutors = st.session_state.user.get("tutors")[st.session_state.user.get("tutors").find("None"):]
-                    collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":update_tutors}})
-                elif tutors == st.session_state.tutor.get("name"):
-                    update_tutors = ""
-                else:
-                    update_tutors = f"{st.session_state.user.get("tutors")} {st.session_state.tutor.get("name")}"
-            collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":update_tutors}})
-            
-            update_students = ""
 
-            for students in st.session_state.tutor.get("students").split():
-                if students == "None":
-                    update_students = st.session_state.tutor.get("students")[st.session_state.tutor.get("students").find("None"):]
-                    collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":update_students}})
-                elif students == st.session_state.user.get("name"):
-                    update_students = st.session_state.tutor.get("students")
-                else:
-                    update_students = f"{st.session_state.tutor.get("students")} {st.session_state.tutor.get("name")}"
-            collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":update_students}})
+                
 
 with tabs[2]: # Profile Tab
     st.title("Your Profile")
@@ -166,8 +191,8 @@ with tabs[3]: # Register Tab
     available_days = st.multiselect("Which day suits you?", ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"])
     available_times = st.multiselect("Time:", ["4:00pm", "5:00pm", "6:00pm", "7:00pm", "8:00pm", "9:00pm", "10:00 pm"])
     points = 1020
-    students = "None"
-    tutors = "None"
+    students = ""
+    tutors = ""
 
     name_exists = collection.find_one({"name": name}) is not None
     error_message = st.empty()
@@ -266,8 +291,11 @@ def display_leaderboard():
 
 with tabs[1]:
     if st.button("View Leaderboard!"):
-        with st.container():
-            st.title("Leaderboard")
-            display_leaderboard()
+        if st.session_state.user is None:
+            st.error("Register or Sign-in before viewing this tab!")
+        else:    
+            with st.container():
+                st.title("Leaderboard")
+                display_leaderboard()
         
         
