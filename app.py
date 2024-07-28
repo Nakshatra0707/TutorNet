@@ -81,7 +81,7 @@ with tabs[5]: # Classes Tab
             st.error("Register or Sign-in before viewing this tab!")
         else:
             st.write(f"Your Students: {st.session_state.user.get('students')}")
-            st.write(f"Your Tutors: {st.session_state.tutor.get("name")} on {st.session_state.days} at {st.session_state.times} for {st.session_state.tutor.get("subjects")}")
+            st.write(f"Your Tutors: {st.session_state.tutor.get('name')} on {st.session_state.days} at {st.session_state.times} for {st.session_state.tutor.get("subjects")}")
     
     if (st.session_state.tutor is not None):
         tutor_rating = st.text_input("Rate your tutor")
@@ -149,14 +149,14 @@ with tabs[0]: # Get a tutor tab
                     time.sleep(1)
                 with st.spinner("Selecting the best tutor......"):
                     time.sleep(1)
-                st.success(f"You have been matched with {st.session_state.tutor.get("name")}")
+                st.success(f"You have been matched with {st.session_state.tutor.get('name')}")
     if st.session_state.tutor is not None:
         if st.button("Confirm"):
             collection.update_one({"name":st.session_state.username}, {"$set":{"tutors":st.session_state.tutor.get("name")}})
             collection.update_one({"name":st.session_state.tutor.get("name")}, {"$set":{"students":st.session_state.username}})
             with st.spinner("Confirming....."):
                 time.sleep(1)
-            st.success(f"Confirmed Class with {st.session_state.tutor.get("name")} on {st.session_state.days} at {st.session_state.times} for {help_subject}")
+            st.success(f"Confirmed Class with {st.session_state.tutor.get('name')} on {st.session_state.days} at {st.session_state.times} for {help_subject}")
 
 
                 
