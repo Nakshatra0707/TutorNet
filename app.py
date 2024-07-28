@@ -81,7 +81,7 @@ with tabs[5]: # Classes Tab
             st.error("Register or Sign-in before viewing this tab!")
         else:
             st.write(f"Your Students: {st.session_state.user.get('students')}")
-            st.write(f"Your Tutors: {st.session_state.tutor.get('name')} on {st.session_state.days} at {st.session_state.times} for {st.session_state.tutor.get("subjects")}")
+            st.write(f"Your Tutors: {st.session_state.tutor.get('name')} on {st.session_state.days} at {st.session_state.times} for {st.session_state.tutor.get('subjects')}")
     
     if (st.session_state.tutor is not None):
         tutor_rating = st.text_input("Rate your tutor")
